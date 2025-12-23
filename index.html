@@ -2,203 +2,32 @@
 <html lang="ja">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Graphle - グラフ版Wordle</title>
+    <link rel="stylesheet" href="style.css">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/mathjs/11.8.0/math.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
-    <style>
-        body { font-family: sans-serif; display: flex; flex-direction: column; align-items: center; background: #f0f2f5; }
-        #game-container { width: 90%; max-width: 600px; background: white; padding: 20px; border-radius: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
-        canvas { background: white; border: 1px solid #ddd; margin-bottom: 10px; }
-        .controls { display: flex; flex-direction: column; gap: 10px; }
-        .latex-buttons { display: flex; flex-wrap: wrap; gap: 5px; margin-top: 5px; }
-        button { cursor: pointer; padding: 8px 12px; border: none; border-radius: 4px; background: #007bff; color: white; }
-        button:hover { background: #0056b3; }
-        button.secondary { background: #6c757d; }
-        .history { margin-top: 20px; border-top: 1px solid #eee; padding-top: 10px; font-size: 0.9em; }
-        #preview { min-height: 40px; margin: 10px 0; padding: 10px; background: #f8f9fa; border-radius: 4px; text-align: center; }
-        input[type="text"] { width: 100%; padding: 10px; font-size: 1.1em; box-sizing: border-box; }
-    </style>
 </head>
 <body>
-
-<h1>Graphle</h1>
-
-<div id="game-container">
-    <div>
-        <label>難易度: </label>
-        <select id="difficulty" onchange="initGame()">
-            <option value="easy">Easy</option>
-            <option value="normal">Normal</option>
-            <option value="hard">Hard</option>
-            <option value="crazy">Crazy</option>
-        </select>
-        <button class="secondary" onclick="initGame()">リスタート</button>
-        <button class="secondary" onclick="showAnswer()">答えを表示</button>
+    <div id="game-container">
+        <h1>Graphle</h1>
+        <div class="menu">
+            <select id="difficulty"></select>
+            <button onclick="initGame()">リスタート</button>
+            <button class="secondary" onclick="showAnswer()">答えを表示</button>
+        </div>
+        <canvas id="graphCanvas"></canvas>
+        <div id="preview"></div>
+        <div class="controls">
+            <input type="text" id="latexInput" placeholder="LaTeX形式で入力...">
+            <div id="helperButtons" class="latex-buttons"></div>
+            <button id="submitBtn">入力を確定</button>
+        </div>
+        <div class="history" id="history">
+            <strong>履歴:</strong>
+            <ul id="historyList"></ul>
+        </div>
     </div>
-
-    <canvas id="graphCanvas"></canvas>
-
-    <div id="preview">数式のプレビューがここに表示されます</div>
-
-    <div class="controls">
-        <input type="text" id="latexInput" placeholder="例: \frac{1}{2}x + 2" oninput="updatePreview()">
-        <div class="latex-buttons" id="helperButtons">
-            </div>
-        <button onclick="submitGuess()" style="background: #28a745;">入力を確定</button>
-    </div>
-
-    <div class="history" id="history">
-        <strong>履歴:</strong>
-        <ul id="historyList"></ul>
-    </div>
-</div>
-
-<script>
-/**
- * 問題の設定 (ここを自由に書き換えてください)
- */
-const questions = {
-    easy: ["y=x", "y=2x-3", "y=1/2x+1", "y=x^2"],
-    normal: ["y=sin(x)", "y=sqrt(x+5)", "y=log(x+10)", "y=x^3-3x"],
-    hard: ["y=sin(2x)+cos(x)", "y=log(abs(x)+1)", "y=1/(x^2+1)", "y=sqrt(25-x^2)"],
-    crazy: ["y=sin(x^2)", "y=exp(x/5)*sin(x)", "y=log(x+10)/x", "y=sin(x)+cos(2x)-sin(3x)"]
-};
-
-let currentAnswer = "";
-let chart = null;
-const ctx = document.getElementById('graphCanvas').getContext('2d');
-const threshold = 0.3; // 一致判定の閾値
-
-// 初期化
-function initGame() {
-    const diff = document.getElementById('difficulty').value;
-    const qList = questions[diff];
-    currentAnswer = qList[Math.floor(Math.random() * qList.length)];
-    
-    document.getElementById('historyList').innerHTML = "";
-    document.getElementById('latexInput').value = "";
-    updatePreview();
-    renderButtons(diff);
-    drawGraph([]);
-}
-
-// 補助ボタンの生成
-function renderButtons(diff) {
-    const container = document.getElementById('helperButtons');
-    let btns = ['+', '-', '*', '/', 'x', '^2', '^{ }', '\\frac{ }{ }'];
-    if (diff !== 'easy') {
-        btns = [...btns, '\\sqrt{ }', 'sin( )', 'cos( )', 'log( )'];
-    }
-    
-    container.innerHTML = btns.map(b => `<button class="secondary" onclick="insertText('${b}')">${b}</button>`).join('');
-}
-
-function insertText(text) {
-    const input = document.getElementById('latexInput');
-    input.value += text;
-    updatePreview();
-    input.focus();
-}
-
-function updatePreview() {
-    const input = document.getElementById('latexInput').value;
-    const preview = document.getElementById('preview');
-    preview.innerHTML = `$$y = ${input}$$`;
-    MathJax.typesetPromise([preview]);
-}
-
-// グラフ描画ロジック
-function drawGraph(guesses) {
-    if (chart) chart.destroy();
-
-    const xValues = [];
-    for (let x = -10; x <= 10; x += 0.2) xValues.push(x.toFixed(1));
-
-    const datasets = [];
-
-    // 正解のグラフ (透明または薄く表示 - 本来は見せないがデバッグ用に薄く)
-    // 今回は「判定用」なのでデータだけ計算
-    const answerData = calculateY(currentAnswer, xValues);
-
-    guesses.forEach((g, index) => {
-        const guessData = calculateY("y=" + g.formula, xValues);
-        const pointColors = guessData.map((val, i) => {
-            return Math.abs(val - answerData[i]) < threshold ? 'red' : 'rgba(0,123,255,0.3)';
-        });
-
-        datasets.push({
-            label: `入力 ${index + 1}`,
-            data: guessData,
-            borderColor: '#007bff',
-            pointBackgroundColor: pointColors,
-            showLine: true,
-            borderWidth: 2
-        });
-    });
-
-    chart = new Chart(ctx, {
-        type: 'line',
-        data: { labels: xValues, datasets: datasets },
-        options: {
-            scales: {
-                x: { type: 'linear', position: 'center', min: -10, max: 10 },
-                y: { type: 'linear', position: 'center', min: -10, max: 10 }
-            },
-            plugins: { legend: { display: false } }
-        }
-    });
-}
-
-function calculateY(formula, xRange) {
-    const cleanFormula = formula.replace('y=', '')
-                                .replace(/\\frac{(.*?)}{(.*?)}/g, "($1)/($2)")
-                                .replace(/\\sqrt{(.*?)}/g, "sqrt($1)")
-                                .replace(/{/g, "(").replace(/}/g, ")");
-    
-    const compiled = math.compile(cleanFormula);
-    return xRange.map(x => {
-        try {
-            return compiled.evaluate({ x: parseFloat(x) });
-        } catch (e) {
-            return null;
-        }
-    });
-}
-
-function submitGuess() {
-    const input = document.getElementById('latexInput').value;
-    if (!input) return;
-
-    const historyList = document.getElementById('historyList');
-    const li = document.createElement('li');
-    li.textContent = input;
-    historyList.appendChild(li);
-
-    // 履歴を保持して再描画
-    const currentGuesses = Array.from(historyList.children).map(node => ({ formula: node.textContent }));
-    drawGraph(currentGuesses);
-
-    // 正解チェック (簡易版: 全ポイントの80%以上が赤なら正解)
-    if (checkWin(input)) {
-        alert("おめでとうございます！正解です！");
-    }
-}
-
-function checkWin(input) {
-    const xValues = [-5, 0, 5]; // 代表点
-    const ansData = calculateY(currentAnswer, xValues);
-    const inputData = calculateY("y=" + input, xValues);
-    return ansData.every((val, i) => Math.abs(val - inputData[i]) < threshold);
-}
-
-function showAnswer() {
-    alert("答えは: " + currentAnswer);
-}
-
-// 初回起動
-initGame();
-</script>
+    <script src="script.js"></script>
 </body>
 </html>
