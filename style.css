@@ -1,0 +1,115 @@
+body {
+    font-family: 'Helvetica Neue', Arial, sans-serif;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+    margin: 0;
+    background-color: #e9ecef;
+}
+
+#game-container {
+    width: 95%;
+    max-width: 550px;
+    background: white;
+    padding: 20px;
+    border-radius: 16px;
+    box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+}
+
+h1 {
+    text-align: center;
+    color: #333;
+    margin-top: 0;
+}
+
+.menu {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 15px;
+}
+
+select, button {
+    padding: 10px;
+    border-radius: 8px;
+    border: 1px solid #ddd;
+    font-size: 14px;
+}
+
+button {
+    background: #007bff;
+    color: white;
+    border: none;
+    transition: 0.2s;
+}
+
+button:hover {
+    background: #0056b3;
+}
+
+button.secondary {
+    background: #6c757d;
+}
+
+#graphCanvas {
+    width: 100% !important;
+    aspect-ratio: 1 / 1;
+    background: #fff;
+    border: 2px solid #333;
+    border-radius: 8px;
+}
+
+#preview {
+    min-height: 50px;
+    margin: 15px 0;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    background: #f8f9fa;
+    border-radius: 8px;
+    border: 1px dashed #ccc;
+    font-size: 1.2em;
+}
+
+.controls {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+input[type="text"] {
+    padding: 12px;
+    font-size: 16px;
+    border: 2px solid #ddd;
+    border-radius: 8px;
+    outline: none;
+}
+
+input[type="text"]:focus {
+    border-color: #007bff;
+}
+
+.latex-buttons {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 5px;
+}
+
+.latex-buttons button {
+    padding: 5px;
+    font-size: 12px;
+    background: #f1f3f5;
+    color: #333;
+    border: 1px solid #dee2e6;
+}
+
+.history {
+    margin-top: 20px;
+    max-height: 150px;
+    overflow-y: auto;
+}
+
+ul {
+    padding-left: 20px;
+    color: #555;
+}
