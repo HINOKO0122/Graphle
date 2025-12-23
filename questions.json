@@ -1,0 +1,6 @@
+{
+  "easy": ["y=x", "y=x+2", "y=2x", "y=x^2"],
+  "normal": ["y=sin(x)", "y=cos(x)", "y=sqrt(x)", "y=log(x+10)"],
+  "hard": ["y=sin(2x)+1", "y=1/x", "y=x^3-x"],
+  "crazy": ["y=sin(x^2)", "y=exp(x/5)", "y=abs(x)-5"]
+}
