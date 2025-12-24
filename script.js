@@ -1,25 +1,20 @@
-// 問題データ (JSONの代わりにここで定義。将来的にfetchに変更可能)
 const questions = {
-    easy: ["y=x", "y=x+2", "y=2x-3", "y=x^2", "y=-x+5"],
-    normal: ["y=sin(x)", "y=cos(x)", "y=sqrt(x+5)", "y=log10(x+11)", "y=x^3/10"],
-    hard: ["y=sin(2x)+1", "y=1/x", "y=x^3-4x", "y=abs(x)-5", "y=sqrt(25-x^2)"],
-    crazy: ["y=sin(x^2)", "y=exp(x/5)*sin(x)", "y=log(abs(x)+1)", "y=sin(x)+cos(2x)"]
+    easy: ["y=x", "y=x+3", "y=2x-1", "y=x^2", "y=-x"],
+    normal: ["y=sin(x)", "y=abs(x)", "y=sqrt(x+4)", "y=log10(x+10)", "y=x^3/5"],
+    hard: ["y=sin(2x)", "y=abs(x)-3", "y=1/x", "y=sqrt(16-x^2)", "y=cos(x)+2"],
+    crazy: ["y=sin(x^2)", "y=abs(sin(x)*5)", "y=exp(x/3)", "y=log(abs(x)+1)"]
 };
 
 let currentAnswer = "";
 let chart = null;
 let history = [];
-const threshold = 0.3; // 判定の厳密さ
+const threshold = 0.4;
 
-// 要素の取得
 const diffSelect = document.getElementById('difficulty');
 const latexInput = document.getElementById('latexInput');
 const helperButtons = document.getElementById('helperButtons');
-const submitBtn = document.getElementById('submitBtn');
 
-// 初期化実行
 document.addEventListener('DOMContentLoaded', () => {
-    // 難易度セレクトボックスの生成
     Object.keys(questions).forEach(diff => {
         const opt = document.createElement('option');
         opt.value = diff;
@@ -30,30 +25,32 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 function initGame() {
-    const diff = diffSelect.value;
-    const qList = questions[diff];
-    currentAnswer = qList[Math.floor(Math.random() * qList.length)];
-    
+    currentAnswer = questions[diffSelect.value][Math.floor(Math.random() * questions[diffSelect.value].length)];
     history = [];
     document.getElementById('historyList').innerHTML = "";
     latexInput.value = "";
     updatePreview();
-    renderButtons(diff);
+    renderButtons(diffSelect.value);
     drawGraph();
 }
 
 function renderButtons(diff) {
     helperButtons.innerHTML = "";
-    let btns = ['+', '-', '*', '/', 'x', '^2', '^{ }', '\\frac{ }{ }'];
+    // ボタン設定: [LaTeX, 表示名, 説明]
+    let btns = [
+        ['x', 'x', '変数'], ['^2', 'x²', '2乗'], ['^{ }', 'xⁿ', '乗数'], ['\\frac{ }{ }', '分数', '分数'],
+        ['+', '+', '加算'], ['-', '-', '減算'], ['*', '×', '乗算'], ['/', '÷', '除算']
+    ];
+    
     if (diff !== 'easy') {
-        btns = [...btns, '\\sqrt{ }', 'sin( )', 'cos( )', 'log10( )'];
+        btns.push(['\\sqrt{ }', '√', '平方根'], ['abs( )', '|x|', '絶対値'], ['sin( )', 'sin', '正弦'], ['log10( )', 'log', '常用対数']);
     }
     
-    btns.forEach(txt => {
+    btns.forEach(([code, label, desc]) => {
         const b = document.createElement('button');
-        b.textContent = txt;
+        b.innerHTML = `${label}<small>${desc}</small>`;
         b.onclick = () => {
-            latexInput.value += txt;
+            latexInput.value += code;
             updatePreview();
             latexInput.focus();
         };
@@ -68,55 +65,40 @@ function updatePreview() {
 }
 
 function calculateY(formula, xRange) {
-    // LaTeXをmath.jsが読める形式に変換
     let clean = formula.replace(/y\s*=\s*/, '')
                        .replace(/\\frac{(.*?)}{(.*?)}/g, "($1)/($2)")
                        .replace(/\\sqrt{(.*?)}/g, "sqrt($1)")
-                       .replace(/log10\((.*?)\)/g, "log10($1)")
+                       .replace(/abs\((.*?)\)/g, "abs($1)")
                        .replace(/{/g, "(").replace(/}/g, ")");
-    
     const compiled = math.compile(clean);
     return xRange.map(x => {
-        try {
-            const res = compiled.evaluate({ x: x });
-            return (typeof res === 'number' && isFinite(res)) ? res : null;
-        } catch (e) {
-            return null;
-        }
+        try { return compiled.evaluate({ x: x }); } catch { return null; }
     });
 }
 
 function drawGraph() {
     if (chart) chart.destroy();
-
     const xValues = [];
-    for (let x = -10; x <= 10; x += 0.2) xValues.push(Number(x.toFixed(1)));
-
+    for (let x = -10; x <= 10; x += 0.25) xValues.push(Number(x.toFixed(2)));
     const ansY = calculateY(currentAnswer, xValues);
-    const datasets = [];
-
-    history.forEach((h, idx) => {
+    const datasets = history.map((h, idx) => {
         const guessY = calculateY(h, xValues);
-        const colors = guessY.map((val, i) => {
-            if (val === null || ansY[i] === null) return 'rgba(0,0,0,0)';
-            return Math.abs(val - ansY[i]) < threshold ? 'red' : 'rgba(0,123,255,0.2)';
-        });
-
-        datasets.push({
+        return {
             data: guessY,
-            borderColor: '#007bff',
-            pointBackgroundColor: colors,
+            borderColor: '#3182ce',
+            pointBackgroundColor: guessY.map((v, i) => (v !== null && Math.abs(v - ansY[i]) < threshold) ? 'red' : 'transparent'),
             pointRadius: 3,
-            borderWidth: 1,
+            borderWidth: 2,
             spanGaps: false
-        });
+        };
     });
 
     chart = new Chart(document.getElementById('graphCanvas'), {
         type: 'line',
         data: { labels: xValues, datasets: datasets },
         options: {
-            responsive: true,
+            maintainAspectRatio: true,
+            aspectRatio: 1,
             scales: {
                 x: { type: 'linear', min: -10, max: 10, position: 'center' },
                 y: { type: 'linear', min: -10, max: 10, position: 'center' }
@@ -126,28 +108,20 @@ function drawGraph() {
     });
 }
 
-submitBtn.onclick = () => {
-    const val = latexInput.value;
-    if (!val) return;
-
-    history.push(val);
+document.getElementById('submitBtn').onclick = () => {
+    if (!latexInput.value) return;
+    history.push(latexInput.value);
     const li = document.createElement('li');
-    li.textContent = `y = ${val}`;
+    li.textContent = `y = ${latexInput.value}`;
     document.getElementById('historyList').appendChild(li);
-    
     drawGraph();
-
-    // 簡易勝利判定
-    const testPoints = [-2, 0, 2];
-    const ansV = calculateY(currentAnswer, testPoints);
-    const inputV = calculateY(val, testPoints);
-    if (ansV.every((v, i) => Math.abs(v - inputV[i]) < threshold)) {
-        alert("🎉 正解です！");
-    }
+    
+    // 正解判定
+    const test = [0];
+    const a = calculateY(currentAnswer, test)[0];
+    const b = calculateY(latexInput.value, test)[0];
+    if (Math.abs(a - b) < 0.1) alert("正解に近いようです！");
 };
 
-function showAnswer() {
-    alert("答え: " + currentAnswer);
-}
-
+function showAnswer() { alert("答え: " + currentAnswer); }
 latexInput.oninput = updatePreview;
