@@ -1,115 +1,87 @@
 body {
-    font-family: 'Helvetica Neue', Arial, sans-serif;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
     display: flex;
-    justify-content: center;
+    flex-direction: column;
     align-items: center;
-    min-height: 100vh;
+    background-color: #f4f7f6;
     margin: 0;
-    background-color: #e9ecef;
+    padding: 10px;
 }
 
 #game-container {
-    width: 95%;
-    max-width: 550px;
+    width: 100%;
+    max-width: 500px; /* PCで見ても大きすぎないサイズ */
     background: white;
-    padding: 20px;
-    border-radius: 16px;
-    box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+    padding: 15px;
+    border-radius: 12px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+    box-sizing: border-box;
 }
 
-h1 {
-    text-align: center;
-    color: #333;
-    margin-top: 0;
-}
+h1 { text-align: center; margin: 0 0 15px 0; color: #2c3e50; }
 
-.menu {
-    display: flex;
-    gap: 10px;
-    margin-bottom: 15px;
-}
+.menu { display: flex; gap: 8px; margin-bottom: 10px; }
+select, button { flex: 1; padding: 10px; border-radius: 6px; border: 1px solid #ccc; font-size: 14px; }
 
-select, button {
-    padding: 10px;
-    border-radius: 8px;
-    border: 1px solid #ddd;
-    font-size: 14px;
+/* グラフを正方形に保つ魔法のCSS */
+.canvas-wrapper {
+    width: 100%;
+    aspect-ratio: 1 / 1;
+    position: relative;
+    margin-bottom: 10px;
 }
-
-button {
-    background: #007bff;
-    color: white;
-    border: none;
-    transition: 0.2s;
-}
-
-button:hover {
-    background: #0056b3;
-}
-
-button.secondary {
-    background: #6c757d;
-}
-
 #graphCanvas {
     width: 100% !important;
-    aspect-ratio: 1 / 1;
-    background: #fff;
-    border: 2px solid #333;
-    border-radius: 8px;
+    height: 100% !important;
+    border: 2px solid #2c3e50;
+    border-radius: 4px;
 }
 
 #preview {
-    min-height: 50px;
-    margin: 15px 0;
+    min-height: 45px;
+    background: #f8f9fa;
+    margin-bottom: 10px;
     display: flex;
     justify-content: center;
     align-items: center;
-    background: #f8f9fa;
-    border-radius: 8px;
-    border: 1px dashed #ccc;
-    font-size: 1.2em;
-}
-
-.controls {
-    display: flex;
-    flex-direction: column;
-    gap: 12px;
-}
-
-input[type="text"] {
-    padding: 12px;
-    font-size: 16px;
-    border: 2px solid #ddd;
-    border-radius: 8px;
-    outline: none;
-}
-
-input[type="text"]:focus {
-    border-color: #007bff;
+    border-radius: 6px;
+    font-size: 1.1em;
 }
 
 .latex-buttons {
     display: grid;
-    grid-template-columns: repeat(4, 1fr);
-    gap: 5px;
+    grid-template-columns: repeat(4, 1fr); /* 4列配置 */
+    gap: 4px;
+    margin-bottom: 10px;
 }
 
 .latex-buttons button {
-    padding: 5px;
     font-size: 12px;
-    background: #f1f3f5;
-    color: #333;
-    border: 1px solid #dee2e6;
+    padding: 8px 2px;
+    background: #edf2f7;
+    color: #4a5568;
+    border: 1px solid #cbd5e0;
 }
 
-.history {
-    margin-top: 20px;
-    max-height: 150px;
-    overflow-y: auto;
+.latex-buttons button small {
+    display: block;
+    font-size: 9px;
+    color: #718096;
 }
 
-ul {
-    padding-left: 20px;
-    color: #555;
+.primary-btn { background: #3182ce; color: white; font-weight: bold; border: none; }
+
+.footer-nav { margin-top: 20px; width: 100%; text-align: center; }
+.external-link {
+    display: inline-block;
+    padding: 12px 24px;
+    background: #2c3e50;
+    color: white;
+    text-decoration: none;
+    border-radius: 50px;
+    font-weight: bold;
+    transition: 0.3s;
 }
+.external-link:hover { opacity: 0.8; }
+
+.history { margin-top: 15px; font-size: 13px; border-top: 1px solid #eee; }
