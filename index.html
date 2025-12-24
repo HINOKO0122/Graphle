@@ -2,6 +2,7 @@
 <html lang="ja">
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Graphle - グラフ版Wordle</title>
     <link rel="stylesheet" href="style.css">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/mathjs/11.8.0/math.js"></script>
@@ -16,18 +17,29 @@
             <button onclick="initGame()">リスタート</button>
             <button class="secondary" onclick="showAnswer()">答えを表示</button>
         </div>
-        <canvas id="graphCanvas"></canvas>
-        <div id="preview"></div>
-        <div class="controls">
-            <input type="text" id="latexInput" placeholder="LaTeX形式で入力...">
-            <div id="helperButtons" class="latex-buttons"></div>
-            <button id="submitBtn">入力を確定</button>
+
+        <div class="canvas-wrapper">
+            <canvas id="graphCanvas"></canvas>
         </div>
-        <div class="history" id="history">
-            <strong>履歴:</strong>
+
+        <div id="preview"></div>
+
+        <div class="controls">
+            <input type="text" id="latexInput" placeholder="y= の後は？" inputmode="text">
+            <div id="helperButtons" class="latex-buttons"></div>
+            <button id="submitBtn" class="primary-btn">入力を確定</button>
+        </div>
+
+        <div class="history">
+            <strong>履歴 (赤い点は正解に近い部分):</strong>
             <ul id="historyList"></ul>
         </div>
     </div>
+
+    <div class="footer-nav">
+        <a href="https://wiki3.jp/iwakuni-mathclub" target="_blank" rel="noopener noreferrer" class="external-link">岩校数研TOPへ戻る</a>
+    </div>
+
     <script src="script.js"></script>
 </body>
 </html>
